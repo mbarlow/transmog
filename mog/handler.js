@@ -50,6 +50,6 @@ module.exports = (context, callback) => {
 		image.getBuffer(Jimp.MIME_JPEG, onBuffer);
 	})
 	.catch(err => {
-    	callback(undefined, {status: "error"});
+    	callback(err, {status: "error"});
 	});
 }
