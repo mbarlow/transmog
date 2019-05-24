@@ -14,42 +14,49 @@ module.exports = (context, callback) => {
     // use a regex to extract the operations from the url
     // fix the url by removing leading slash and adding back a missing slash
     let path = process.env.Http_Path
-    let opsMatch = path.match(/fetch\/((\w+),?)+\/http/)[0].split('/')[1]
-    let ops = opsMatch.split(',')
-    let url = path.split(opsMatch)[1].substr(1).replace(':/',"://")
 
-    // map the string array into an operations log object of param -> value
-    const oplog = {}
-    ops.map(item => {
-        let param = item.split('_')[0]
-        let value = item.split('_')[1]
-        oplog[param] = value
-    })
+    if (!path || path === "") {
+        callback(1, {status: "bad request"})
+    } else {
 
-    // use jimp to retrieve the image at the url, then run a crop operation (if specified in the operations list)
-	Jimp.read({
-        url: url,
-        headers: {}
-	})
-	.then(image => {
-        for (var key in oplog) {
-            if (oplog.hasOwnProperty(key)) {
-                let param = key
-                let val = oplog[param]
-                switch (param) {
-                    case 'c':
-                        switch (val) {
-                            case 'fill':
-                                image.crop(Number(oplog.x), Number(oplog.y), Number(oplog.w), Number(oplog.h))
-                                break;
-                        }
-                        break;
+        let opsMatch = path.match(/fetch\/((\w+),?)+\/http/)[0].split('/')[1]
+        let ops = opsMatch.split(',')
+        let url = path.split(opsMatch)[1].substr(1).replace(':/',"://")
+
+        // map the string array into an operations log object of param -> value
+        const oplog = {}
+        ops.map(item => {
+            let param = item.split('_')[0]
+            let value = item.split('_')[1]
+            oplog[param] = value
+        })
+
+        // use jimp to retrieve the image at the url, then run a crop operation (if specified in the operations list)
+        Jimp.read({
+            url: url,
+            headers: {}
+        })
+        .then(image => {
+            for (var key in oplog) {
+                if (oplog.hasOwnProperty(key)) {
+                    let param = key
+                    let val = oplog[param]
+                    switch (param) {
+                        case 'c':
+                            switch (val) {
+                                case 'fill':
+                                    image.crop(Number(oplog.x), Number(oplog.y), Number(oplog.w), Number(oplog.h))
+                                    break;
+                            }
+                            break;
+                    }
                 }
             }
-        }
-		image.getBuffer(Jimp.MIME_JPEG, onBuffer);
-	})
-	.catch(err => {
-    	callback(err, {status: "error"});
-	});
+            image.getBuffer(Jimp.MIME_JPEG, onBuffer);
+        })
+        .catch(err => {
+            callback(err, {status: "error"});
+        });
+    
+    }
 }
