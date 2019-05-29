@@ -18,7 +18,7 @@ async function* handler(req, res) {
 
         let opsMatch = path.match(/fetch\/((\w+),?)+\/http/)[0].split('/')[1]
         let ops = opsMatch.split(',')
-        let url = path.split(opsMatch)[1].substr(1)
+        let url = path.split(opsMatch)[1].substr(1).replace(':/','://')
 
         // map the string array into an operations log object of param -> value
         const oplog = {}
