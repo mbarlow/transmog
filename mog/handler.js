@@ -3,20 +3,17 @@
 var Jimp = require('jimp')
 const querystring = require('querystring');
 
-module.exports = (context, callback) => {
+module.exports = handler
 
-	function onBuffer(err, buffer) {
-	  if (err) throw err;
-	  callback(undefined, buffer);
-	}
+async function* handler(req, res) {
 
-    // get the url path from env var
+    try {
     // use a regex to extract the operations from the url
     // fix the url by removing leading slash and adding back a missing slash
-    let path = process.env.Http_Path
+    let path = req.path
 
     if (!path || path === "") {
-        callback(1, {status: "bad request"})
+        res.status(500).send("bad request")
     } else {
 
         let opsMatch = path.match(/fetch\/((\w+),?)+\/http/)[0].split('/')[1]
@@ -52,11 +49,17 @@ module.exports = (context, callback) => {
                     }
                 }
             }
-            image.getBuffer(Jimp.MIME_JPEG, onBuffer);
+            image.getBuffer(Jimp.MIME_JPEG, function(err, buffer) {
+                res.set("Content-Type", Jimp.MIME_JPEG)
+                res.send(buffer)
+            });
         })
-        .catch(err => {
-            callback(err, {status: "error"});
+        .catch(e => {
+            res.status(500).send(e.message);
         });
-    
+    }
+
+    } catch (e) {
+        res.status(500).send(e.message)
     }
 }
